@@ -11,9 +11,10 @@ params = {
     "latitude": LAT,
     "longitude": LON,
     "hourly": [
-
+        "temperature_2m",
         "precipitation",
         "rain",
+        "wind_speed_10m"
     ],
     "forecast_days": 4,
     "timezone": "Europe/Paris"
