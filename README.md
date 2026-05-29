@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -7,13 +6,13 @@
 <style>
   body{
     font-family:system-ui,Arial,sans-serif;
-    margin:20px;
+    margin:5px;
   }
 
   table{
     border-collapse:collapse;
     width:100%;
-    max-width:700px;
+    max-width:400px;
   }
 
   th,td{
