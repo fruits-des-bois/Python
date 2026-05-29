@@ -1,59 +1,94 @@
-from IPython.display import HTML
-import requests
-import pandas as pd
-
-LAT = 49.4333
-LON = 2.0833
-
-url = "https://api.open-meteo.com/v1/forecast"
-
-params = {
-    "latitude": LAT,
-    "longitude": LON,
-    "hourly": [
-        "temperature_2m",
-        "precipitation",
-        "rain",
-        "wind_speed_10m"
-    ],
-    "forecast_days": 4,
-    "timezone": "Europe/Paris"
-}
-
-r = requests.get(url, params=params)
-
-data = r.json()
-
-df = pd.DataFrame({
-    "Heure_Raw": data["hourly"]["time"],
-    "Pluie (mm)": data["hourly"]["rain"],
-    "Précipitations (mm)": data["hourly"]["precipitation"],
-})
-df['Heure_Raw'] = pd.to_datetime(df['Heure_Raw'])
-
-df['Date'] = df['Heure_Raw'].dt.strftime('%d/%m/%Y')
-df['Heure'] = df['Heure_Raw'].dt.strftime('%H:%M')
-
-df = df[['Date', 'Heure', 'Pluie (mm)', 'Précipitations (mm)']]
-
-html_table = df.to_html(index=False, escape=False)
-
-html_output = f"""
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>Prévisions météo Beauvais</title>
+<title>Observations météo</title>
+
 <style>
-  body{{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:20px}}
-  table{{border-collapse:collapse;width:100%;max-width:800px; margin-top: 15px;}}
-  th,td{{border:1px solid #ddd;padding:8px;text-align:right}}
-  th{{background:#f3f3f3;text-align:left}}
-  caption{{font-weight:600;margin-bottom:8px;text-align:left}}
+  body{
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    margin:20px;
+  }
+
+  table{
+    border-collapse:collapse;
+    width:100%;
+    max-width:500px;
+  }
+
+  th,td{
+    border:1px solid #ddd;
+    padding:8px;
+  }
+
+  th{
+    background:#f3f3f3;
+  }
+
+  td.num{
+    text-align:right;
+  }
+
+  td.txt{
+    text-align:left;
+  }
 </style>
 </head>
+
 <body>
-{html_table}
+
+<table id="tbl">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Heure</th>
+      <th>Précipitations (mm)</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+
+const url =
+  "https://api.open-meteo.com/v1/forecast?latitude=49.4333&longitude=2.0833&hourly=precipitation&timezone=Europe/Paris";
+
+fetch(url)
+  .then(r => r.json())
+  .then(j => {
+
+    const tbody = document.querySelector("#tbl tbody");
+
+    const times = j.hourly.time;
+    const precipitation = j.hourly.precipitation;
+
+    for(let i = 0; i < times.length; i++) {
+
+      const tr = document.createElement("tr");
+
+      const dt = new Date(times[i]);
+
+      const datePart = dt.toLocaleDateString("fr-FR");
+      const timePart = dt.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+
+      tr.innerHTML = `
+        <td class="txt">${datePart}</td>
+        <td class="txt">${timePart}</td>
+        <td class="num">${precipitation[i] ?? "—"}</td>
+      `;
+
+      tbody.appendChild(tr);
+    }
+  })
+  .catch(e => {
+    document.querySelector("#tbl tbody").innerHTML =
+      `<tr><td colspan="4">Erreur : ${e.message}</td></tr>`;
+  });
+
+</script>
+
 </body>
 </html>
-"""
-display(HTML(html_output))
