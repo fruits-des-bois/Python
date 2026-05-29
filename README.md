@@ -1,46 +1,29 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>Prévisions météo</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
   body{
     font-family:system-ui,Arial,sans-serif;
-    margin:5px;
+    margin:10px;
   }
 
-  table{
-    border-collapse:collapse;
+  #chart-container{
     width:100%;
-    max-width:400px;
-  }
-
-  th,td{
-    border:1px solid #ddd;
-    padding:8px;
-  }
-
-  th{
-    background:#f3f3f3;
-  }
-
-  td.num{
-    text-align:right;
+    max-width:1000px;
+    height:400px;
   }
 </style>
 </head>
 
 <body>
-<table id="tbl">
-  <thead>
-    <tr>
-      <th>Date</th>
-      <th>Heure</th>
-      <th>Précipitations (mm)</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+
+
+<div id="chart-container">
+  <canvas id="rainChart"></canvas>
+</div>
 
 <script>
 
@@ -51,10 +34,11 @@ fetch(url)
   .then(r => r.json())
   .then(j => {
 
-    const tbody = document.querySelector("#tbl tbody");
-
     const times = j.hourly.time;
     const precipitation = j.hourly.precipitation;
+
+    const labels = [];
+    const values = [];
 
     // Maintenant
     const now = new Date();
@@ -73,25 +57,77 @@ fetch(url)
       // Filtre entre +1h et J+4
       if(dt >= startDate && dt <= endDate) {
 
-        const tr = document.createElement("tr");
+        labels.push(
+          dt.toLocaleDateString("fr-FR", {
+            day:"2-digit",
+            month:"2-digit"
+          })
+          + " "
+          +
+          dt.toLocaleTimeString("fr-FR", {
+            hour:"2-digit",
+            minute:"2-digit"
+          })
+        );
 
-        tr.innerHTML = `
-          <td>${dt.toLocaleDateString("fr-FR")}</td>
-          <td>${dt.toLocaleTimeString("fr-FR", {
-            hour: "2-digit",
-            minute: "2-digit"
-          })}</td>
-          <td class="num">${precipitation[i] ?? "—"}</td>
-        `;
-
-        tbody.appendChild(tr);
+        values.push(precipitation[i] ?? 0);
       }
     }
+
+    // Création du graphique
+    new Chart(document.getElementById("rainChart"), {
+
+      type: "bar",
+
+      data: {
+        labels: labels,
+
+        datasets: [{
+          label: "Précipitations (mm)",
+          data: values,
+
+          backgroundColor: "rgba(54, 162, 235, 0.7)",
+          borderColor: "rgba(54, 162, 235, 1)",
+          borderWidth: 1
+        }]
+      },
+
+      options: {
+
+        responsive: true,
+
+        plugins: {
+          legend: {
+            display: true
+          }
+        },
+
+        scales: {
+
+          x: {
+            ticks: {
+              maxRotation: 90,
+              minRotation: 45
+            }
+          },
+
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: "mm"
+            }
+          }
+        }
+      }
+    });
+
   })
+
   .catch(e => {
 
-    document.querySelector("#tbl tbody").innerHTML =
-      `<tr><td colspan="3">Erreur : ${e.message}</td></tr>`;
+    document.body.innerHTML +=
+      "<p>Erreur : " + e.message + "</p>";
 
   });
 
