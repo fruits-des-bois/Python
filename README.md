@@ -1,18 +1,19 @@
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>Observations météo</title>
+<title>Prévisions météo</title>
 
 <style>
   body{
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    font-family:system-ui,Arial,sans-serif;
     margin:20px;
   }
 
   table{
     border-collapse:collapse;
     width:100%;
-    max-width:500px;
+    max-width:700px;
   }
 
   th,td{
@@ -27,15 +28,10 @@
   td.num{
     text-align:right;
   }
-
-  td.txt{
-    text-align:left;
-  }
 </style>
 </head>
 
 <body>
-
 <table id="tbl">
   <thead>
     <tr>
@@ -61,30 +57,43 @@ fetch(url)
     const times = j.hourly.time;
     const precipitation = j.hourly.precipitation;
 
-    for(let i = 0; i < times.length; i++) {
+    // Maintenant
+    const now = new Date();
 
-      const tr = document.createElement("tr");
+    // Maintenant + 1 heure
+    const startDate = new Date(now.getTime() + 60 * 60 * 1000);
+
+    // Fin = J+4
+    const endDate = new Date(now);
+    endDate.setDate(endDate.getDate() + 4);
+
+    for(let i = 0; i < times.length; i++) {
 
       const dt = new Date(times[i]);
 
-      const datePart = dt.toLocaleDateString("fr-FR");
-      const timePart = dt.toLocaleTimeString("fr-FR", {
-        hour: "2-digit",
-        minute: "2-digit"
-      });
+      // Filtre entre +1h et J+4
+      if(dt >= startDate && dt <= endDate) {
 
-      tr.innerHTML = `
-        <td class="txt">${datePart}</td>
-        <td class="txt">${timePart}</td>
-        <td class="num">${precipitation[i] ?? "—"}</td>
-      `;
+        const tr = document.createElement("tr");
 
-      tbody.appendChild(tr);
+        tr.innerHTML = `
+          <td>${dt.toLocaleDateString("fr-FR")}</td>
+          <td>${dt.toLocaleTimeString("fr-FR", {
+            hour: "2-digit",
+            minute: "2-digit"
+          })}</td>
+          <td class="num">${precipitation[i] ?? "—"}</td>
+        `;
+
+        tbody.appendChild(tr);
+      }
     }
   })
   .catch(e => {
+
     document.querySelector("#tbl tbody").innerHTML =
-      `<tr><td colspan="4">Erreur : ${e.message}</td></tr>`;
+      `<tr><td colspan="3">Erreur : ${e.message}</td></tr>`;
+
   });
 
 </script>
