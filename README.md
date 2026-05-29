@@ -1,7 +1,7 @@
+from IPython.display import HTML
 import requests
 import pandas as pd
 
-# Coordonnées Beauvais
 LAT = 49.4333
 LON = 2.0833
 
@@ -20,29 +20,40 @@ params = {
     "timezone": "Europe/Paris"
 }
 
-# Requête API
 r = requests.get(url, params=params)
 
-# Conversion JSON
 data = r.json()
 
-# Création du tableau
 df = pd.DataFrame({
     "Heure_Raw": data["hourly"]["time"],
     "Pluie (mm)": data["hourly"]["rain"],
     "Précipitations (mm)": data["hourly"]["precipitation"],
 })
-
-# Convert 'Heure_Raw' to datetime objects
 df['Heure_Raw'] = pd.to_datetime(df['Heure_Raw'])
 
-# Create new 'Date' and 'Heure' columns
-df['Date'] = df['Heure_Raw'].dt.strftime('%d/%m/%Y') # Modified format here
+df['Date'] = df['Heure_Raw'].dt.strftime('%d/%m/%Y')
 df['Heure'] = df['Heure_Raw'].dt.strftime('%H:%M')
 
-# Drop the raw 'Heure_Raw' column and reorder columns for a cleaner display
 df = df[['Date', 'Heure', 'Pluie (mm)', 'Précipitations (mm)']]
 
-# Affichage
-print("\nPrévisions météo Beauvais")
-display(df)
+html_table = df.to_html(index=False, escape=False)
+
+html_output = f"""
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Prévisions météo Beauvais</title>
+<style>
+  body{{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:20px}}
+  table{{border-collapse:collapse;width:100%;max-width:800px; margin-top: 15px;}}
+  th,td{{border:1px solid #ddd;padding:8px;text-align:right}}
+  th{{background:#f3f3f3;text-align:left}}
+  caption{{font-weight:600;margin-bottom:8px;text-align:left}}
+</style>
+</head>
+<body>
+{html_table}
+</body>
+</html>
+"""
+display(HTML(html_output))
